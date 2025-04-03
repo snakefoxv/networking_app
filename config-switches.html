@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herramienta de Configuración de Switches</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .config-textarea {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .ip-list {
+            min-height: 100px;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .status-pending {
+            background-color: #fbbf24;
+        }
+        .status-success {
+            background-color: #10b981;
+        }
+        .status-failed {
+            background-color: #ef4444;
+        }
+        .connection-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 5px;
+        }
+        .log-time {
+            color: #94a3b8;
+            margin-right: 10px;
+        }
+        .log-success {
+            color: #86efac;
+        }
+        .log-error {
+            color: #fca5a5;
+        }
+        .log-info {
+            color: #93c5fd;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-blue-600 px-6 py-4 flex items-center">
+                <i class="fas fa-network-wired text-white text-2xl mr-3"></i>
+                <h1 class="text-2xl font-bold text-white">Herramienta de Configuración de Switches</h1>
+            </div>
+
+            <!-- Main Content -->
+            <div class="p-6">
+                <!-- Configuration Section -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                        <i class="fas fa-code mr-2 text-blue-500"></i> Configuración a Aplicar
+                    </h2>
+                    <div class="relative">
+                        <textarea id="configScript" class="w-full h-64 p-4 border border-gray-300 rounded-lg config-textarea"
+                                  placeholder="Pega aquí el script de configuración que deseas aplicar a los switches..."></textarea>
+                        <div class="absolute top-2 right-2 flex space-x-2">
+                            <button onclick="clearField('configScript')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-trash-alt mr-1"></i> Limpiar
+                            </button>
+                            <button onclick="formatConfig()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-align-left mr-1"></i> Formatear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IP List Section -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                        <i class="fas fa-list-ol mr-2 text-blue-500"></i> Lista de IPs de Switches
+                    </h2>
+                    <div class="relative">
+                        <textarea id="ipList" class="w-full h-32 p-4 border border-gray-300 rounded-lg ip-list"
+                                  placeholder="Ingresa las IPs de los switches, una por línea..."></textarea>
+                        <div class="absolute top-2 right-2 flex space-x-2">
+                            <button onclick="clearField('ipList')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-trash-alt mr-1"></i> Limpiar
+                            </button>
+                            <button onclick="addSampleIPs()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-magic mr-1"></i> Ejemplo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Credentials Section -->
+                <div class="mb-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                            <i class="fas fa-user-shield mr-2 text-blue-500"></i> Credenciales SSH
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                                <div class="relative">
+                                    <input type="text" id="username" class="w-full p-3 border border-gray-300 rounded-lg"
+                                           placeholder="Ingresa el usuario SSH">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-user text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                                <div class="relative">
+                                    <input type="password" id="password" class="w-full p-3 border border-gray-300 rounded-lg"
+                                           placeholder="Ingresa la contraseña SSH">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-lock text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="enablePassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña Enable (opcional)</label>
+                                <div class="relative">
+                                    <input type="password" id="enablePassword" class="w-full p-3 border border-gray-300 rounded-lg"
+                                           placeholder="Ingresa la contraseña de modo privilegiado">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                        <i class="fas fa-key text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connection Options -->
+                    <div>
+                        <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                            <i class="fas fa-cog mr-2 text-blue-500"></i> Opciones de Conexión
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="port" class="block text-sm font-medium text-gray-700 mb-1">Puerto SSH</label>
+                                <input type="number" id="port" value="22" class="w-full p-3 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label for="timeout" class="block text-sm font-medium text-gray-700 mb-1">Timeout (segundos)</label>
+                                <input type="number" id="timeout" value="10" class="w-full p-3 border border-gray-300 rounded-lg">
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="saveConfig" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="saveConfig" class="ml-2 block text-sm text-gray-700">Guardar configuración después de aplicar</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="parallelConnections" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="parallelConnections" class="ml-2 block text-sm text-gray-700">Conexiones paralelas</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connection Button -->
+                <div class="flex justify-center mb-8">
+                    <button id="connectButton" onclick="startConnections()"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg flex items-center transition-all duration-300 transform hover:scale-105">
+                        <i class="fas fa-plug mr-2"></i> Establecer Conexiones SSH
+                    </button>
+                </div>
+
+                <!-- Status Section -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                        <i class="fas fa-tasks mr-2 text-blue-500"></i> Estado de las Conexiones
+                    </h2>
+                    <div id="statusSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <div class="flex items-center">
+                                <div class="status-indicator status-pending"></div>
+                                <span class="font-medium text-blue-800">Pendientes:</span>
+                                <span id="pendingCount" class="ml-2 font-bold">0</span>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                            <div class="flex items-center">
+                                <div class="status-indicator status-success"></div>
+                                <span class="font-medium text-green-800">Exitosas:</span>
+                                <span id="successCount" class="ml-2 font-bold">0</span>
+                            </div>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                            <div class="flex items-center">
+                                <div class="status-indicator status-failed"></div>
+                                <span class="font-medium text-red-800">Fallidas:</span>
+                                <span id="failedCount" class="ml-2 font-bold">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="connectionProgress" class="hidden">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                            <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span id="progressText">0% completado</span>
+                            <span id="progressDetail">0 de 0 conexiones</span>
+                        </div>
+                    </div>
+
+                    <div id="connectionDetails" class="mt-4 hidden">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mensaje</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tiempo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="connectionTableBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Rows will be added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Log Section -->
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2 flex items-center">
+                        <i class="fas fa-terminal mr-2 text-blue-500"></i> Registro de Actividad
+                    </h2>
+                    <div id="connectionLog" class="connection-log">
+                        <div class="log-entry">
+                            <span class="log-time">[00:00:00]</span>
+                            <span class="log-info">Sistema listo. Ingresa la configuración y las IPs para comenzar.</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex justify-end">
+                        <button onclick="clearLog()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm">
+                            <i class="fas fa-trash-alt mr-1"></i> Limpiar Registro
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-100 px-6 py-4 text-center text-sm text-gray-600 border-t">
+                <p>Herramienta de Configuración de Switches - © 2023 Redes Corporativas</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper functions
+        function clearField(fieldId) {
+            document.getElementById(fieldId).value = '';
+            addLogEntry('Campo limpiado: ' + fieldId, 'info');
+        }
+
+        function formatConfig() {
+            const configTextarea = document.getElementById('configScript');
+            const lines = configTextarea.value.split('\n');
+            const formattedLines = lines.map(line => {
+                // Remove extra spaces
+                let formatted = line.trim();
+                // Add proper indentation based on Cisco-like commands
+                if (formatted.startsWith(' ') || formatted.startsWith('!') || formatted === '') {
+                    return formatted;
+                } else {
+                    return '    ' + formatted;
+                }
+            });
+            configTextarea.value = formattedLines.join('\n');
+            addLogEntry('Configuración formateada', 'info');
+        }
+
+        function addSampleIPs() {
+            const sampleIPs = [
+                '192.168.1.1',
+                '192.168.1.2',
+                '192.168.1.3',
+                '192.168.1.4',
+                '192.168.1.5',
+                '10.0.0.1',
+                '10.0.0.2',
+                '10.0.0.3'
+            ].join('\n');
+            document.getElementById('ipList').value = sampleIPs;
+            addLogEntry('IPs de ejemplo agregadas', 'info');
+        }
+
+        function addLogEntry(message, type) {
+            const logContainer = document.getElementById('connectionLog');
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'log-time';
+            timeSpan.textContent = timeString;
+
+            const messageSpan = document.createElement('span');
+            messageSpan.className = `log-${type}`;
+            messageSpan.textContent = message;
+
+            logEntry.appendChild(timeSpan);
+            logEntry.appendChild(messageSpan);
+
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('connectionLog').innerHTML = `
+                <div class="log-entry">
+                    <span class="log-time">[00:00:00]</span>
+                    <span class="log-info">Registro limpiado. Listo para nuevas conexiones.</span>
+                </div>
+            `;
+        }
+
+        // Connection functions
+        function startConnections() {
+            const configScript = document.getElementById('configScript').value.trim();
+            const ipListText = document.getElementById('ipList').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const enablePassword = document.getElementById('enablePassword').value.trim();
+            const port = document.getElementById('port').value;
+            const timeout = document.getElementById('timeout').value;
+            const saveConfig = document.getElementById('saveConfig').checked;
+            const parallelConnections = document.getElementById('parallelConnections').checked;
+
+            // Validate inputs
+            if (!configScript) {
+                addLogEntry('Error: Debes ingresar un script de configuración', 'error');
+                return;
+            }
+
+            if (!ipListText) {
+                addLogEntry('Error: Debes ingresar al menos una IP', 'error');
+                return;
+            }
+
+            if (!username || !password) {
+                addLogEntry('Error: Debes ingresar usuario y contraseña', 'error');
+                return;
+            }
+
+            const ipList = ipListText.split('\n').filter(ip => ip.trim() !== '');
+            const totalConnections = ipList.length;
+
+            // Update UI
+            document.getElementById('pendingCount').textContent = totalConnections;
+            document.getElementById('successCount').textContent = '0';
+            document.getElementById('failedCount').textContent = '0';
+
+            document.getElementById('connectionProgress').classList.remove('hidden');
+            document.getElementById('connectionDetails').classList.remove('hidden');
+
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressText').textContent = '0% completado';
+            document.getElementById('progressDetail').textContent = `0 de ${totalConnections} conexiones`;
+
+            // Clear table body
+            const tableBody = document.getElementById('connectionTableBody');
+            tableBody.innerHTML = '';
+
+            // Disable connect button
+            const connectButton = document.getElementById('connectButton');
+            connectButton.disabled = true;
+            connectButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+            connectButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+
+            addLogEntry(`Iniciando conexiones SSH a ${totalConnections} switches...`, 'info');
+
+            // Simulate connections (in a real app, this would be actual SSH connections)
+            let successCount = 0;
+            let failedCount = 0;
+
+            ipList.forEach((ip, index) => {
+                // Add row to table
+                const row = document.createElement('tr');
+                row.id = `row-${ip}`;
+
+                const ipCell = document.createElement('td');
+                ipCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
+                ipCell.textContent = ip;
+
+                const statusCell = document.createElement('td');
+                statusCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'flex items-center';
+
+                const statusIndicator = document.createElement('div');
+                statusIndicator.className = 'status-indicator status-pending';
+
+                const statusText = document.createElement('span');
+                statusText.className = 'ml-2';
+                statusText.textContent = 'Pendiente';
+
+                statusDiv.appendChild(statusIndicator);
+                statusDiv.appendChild(statusText);
+                statusCell.appendChild(statusDiv);
+
+                const messageCell = document.createElement('td');
+                messageCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                messageCell.textContent = 'Esperando conexión...';
+
+                const timeCell = document.createElement('td');
+                timeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+                timeCell.textContent = '--:--:--';
+
+                row.appendChild(ipCell);
+                row.appendChild(statusCell);
+                row.appendChild(messageCell);
+                row.appendChild(timeCell);
+
+                tableBody.appendChild(row);
+
+                // Simulate connection with random success/failure
+                const delay = parallelConnections ? 1000 + Math.random() * 1000 : (index + 1) * 2000;
+
+                setTimeout(() => {
+                    const now = new Date();
+                    const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                    // Randomly determine if connection succeeds (80% success rate for demo)
+                    const success = Math.random() > 0.2;
+
+                    if (success) {
+                        successCount++;
+                        statusIndicator.className = 'status-indicator status-success';
+                        statusText.textContent = 'Éxito';
+                        messageCell.textContent = 'Configuración aplicada correctamente';
+                        timeCell.textContent = timeString;
+
+                        addLogEntry(`Conexión exitosa a ${ip}: Configuración aplicada`, 'success');
+                    } else {
+                        failedCount++;
+                        statusIndicator.className = 'status-indicator status-failed';
+                        statusText.textContent = 'Falló';
+                        messageCell.textContent = 'Error de autenticación o timeout';
+                        timeCell.textContent = timeString;
+
+                        addLogEntry(`Error al conectar a ${ip}: Error de autenticación`, 'error');
+                    }
+
+                    // Update counts
+                    document.getElementById('pendingCount').textContent = totalConnections - successCount - failedCount;
+                    document.getElementById('successCount').textContent = successCount;
+                    document.getElementById('failedCount').textContent = failedCount;
+
+                    // Update progress
+                    const progress = Math.round(((successCount + failedCount) / totalConnections) * 100);
+                    document.getElementById('progressBar').style.width = `${progress}%`;
+                    document.getElementById('progressText').textContent = `${progress}% completado`;
+                    document.getElementById('progressDetail').textContent = `${successCount + failedCount} de ${totalConnections} conexiones`;
+
+                    // If all connections completed
+                    if (successCount + failedCount === totalConnections) {
+                        addLogEntry(`Proceso completado: ${successCount} éxitos, ${failedCount} fallos`,
+                                   failedCount === 0 ? 'success' : (successCount === 0 ? 'error' : 'info'));
+
+                        // Re-enable connect button
+                        connectButton.disabled = false;
+                        connectButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        connectButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                    }
+                }, delay);
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            addLogEntry('Herramienta de configuración de switches inicializada', 'info');
+        });
+    </script>
+</body>
+</html>
